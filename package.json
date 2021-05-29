@@ -1,0 +1,17 @@
+{
+  "name": "elm-admin",
+  "version": "1.0.0",
+  "description": "This project is bootstrapped with [Create Elm App](https://github.com/halfzebra/create-elm-app).",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "build-css": "sass src --load-path=../node_modules --style compressed"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "nes.css": "^2.3.0"
+  }
+}
