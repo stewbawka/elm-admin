@@ -15,13 +15,14 @@ import WebSocket
 
 import Routes
 import Users as U
+import CreateUser as CU
 
 
 ---- MODEL ----
 
 type Page
     = Users U.Model
-    | CreateUser
+    | CreateUser CU.Model
     | NotFound
 
 
@@ -52,7 +53,12 @@ setNewPage maybeRoute model =
             )
 
         Just Routes.NewUser ->
-            ( { model | page = CreateUser }, Cmd.none )
+            let
+                ( createUserModel, createUserCmd ) = CU.init
+            in
+            ( { model | page = CreateUser createUserModel }
+            , Cmd.map CreateUserMsg createUserCmd 
+            )
 
         Nothing ->
             ( { model | page = NotFound }, Cmd.none )
@@ -64,6 +70,7 @@ type Msg
     = NewRoute (Maybe Routes.Route)
     | Visit UrlRequest
     | UsersMsg U.Msg
+    | CreateUserMsg CU.Msg
 
 processPageUpdate :
     (pageModel -> Page)
@@ -95,6 +102,13 @@ update msg model =
             ( { model | page = Users updatedUsersModel }
             , Cmd.map UsersMsg usersCmd
             )
+        ( CreateUserMsg createUserMsg, CreateUser createUserModel ) ->
+            let
+                ( updatedCreateUserModel, createUserCmd ) = CU.update createUserMsg createUserModel
+            in
+            ( { model | page = CreateUser updatedCreateUserModel }
+            , Cmd.map CreateUserMsg createUserCmd
+            )
 
         ( Visit (Browser.Internal url), _ ) ->
             ( model, Navigation.pushUrl model.navigationKey (Url.toString url) )
@@ -121,8 +135,8 @@ view model =
                     text "Not Found"
                 Users usersModel ->
                     U.view usersModel |> Html.map UsersMsg
-                CreateUser ->
-                    text "Not Found"
+                CreateUser createUserModel ->
+                    CU.view createUserModel |> Html.map CreateUserMsg
 
     in
     { title = "Admin"

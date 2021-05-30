@@ -1,13 +1,14 @@
-module Users exposing (Model, Msg, init, update, view)
+module Users exposing (Model, Msg, User, init, update, userDecoder, view)
 
 import Time
 import Html exposing (Html, a, button, table, tbody, thead, text, td, th, tr, div, h1, img)
-import Html.Attributes exposing (class, src)
+import Html.Attributes exposing (class, href, src)
 import Http
 import Json.Decode exposing (Decoder, andThen, at, bool, fail, int, list, string, succeed)
 import Json.Decode.Pipeline exposing (required)
 import Iso8601 exposing (decoder)
 import DateFormat
+import Routes
 
 
 ---- MODEL ----
@@ -121,7 +122,11 @@ view model =
     div [ class "content" ]
         [ viewUserList model.users
         , div [ class "nes-container is-centered" ]
-              [ a [ class "nes-btn is-primary" ] 
+              [ a [ class "nes-btn is-primary" 
+                  , href (Routes.routeToUrl Routes.NewUser)
+                  ] 
+
+
                   [ text "Add User" ]
               ]
         ]
