@@ -6,7 +6,7 @@ import Http
 import Time
 import Url exposing (Url)
 import Html exposing (Html, a, button, table, tbody, thead, text, td, th, tr, div, h1, img)
-import Html.Attributes exposing (class, src)
+import Html.Attributes exposing (class, href, src)
 import Json.Decode exposing (Decoder, andThen, at, bool, fail, int, list, string, succeed)
 import Json.Decode.Pipeline exposing (required)
 import Iso8601 exposing (decoder)
@@ -144,7 +144,9 @@ view model =
     let
         header =
             div [ class "nes-container is-centered is-rounded" ]
-                [ a [ class "nes-btn" ] 
+                [ a [ class "nes-btn" 
+                    , href (Routes.routeToUrl Routes.UsersList)
+                    ]
                     [ text "Users" ]
                 ]
             
