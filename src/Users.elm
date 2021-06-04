@@ -18,11 +18,8 @@ type alias Model =
     , users : Maybe UserList
     }
 
-type alias Id = 
-    Int
-
 type alias User =
-    { id: Id
+    { id: Int
     , firstName : String
     , lastName : String
     , email : String

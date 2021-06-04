@@ -1,16 +1,19 @@
 module CreateUser exposing (Model, Msg, init, update, view)
 
+import Browser.Navigation as Navigation
 import Users as U exposing (User, userDecoder)
 import Html exposing (Html, a, button, form, input, label, text, div, h1, img)
 import Html.Attributes exposing (class, for, href, id, src, type_)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Json.Decode exposing (Decoder, at)
 import Json.Encode as Encode
-import Routes
+import Routes exposing (replaceUrl)
 
 type alias Model =
     { error : Maybe Http.Error
     , newUser : NewUser
+    , navKey : Navigation.Key
     }
 
 type alias NewUser =
@@ -29,11 +32,16 @@ initialNewUser =
     , email = ""
     }
 
-initialModel : Model
-initialModel  =
+initialModel : Navigation.Key -> Model
+initialModel  navKey =
     { newUser = initialNewUser
     , error = Nothing
+    , navKey = navKey
     }
+
+userDetailDecoder : Decoder User
+userDetailDecoder =
+    at ["data"] U.userDecoder
 
 saveUser : NewUser -> Cmd Msg
 saveUser newUser =
@@ -43,18 +51,17 @@ saveUser newUser =
                 [ ("first_name", Encode.string newUser.firstName)
                 , ("last_name", Encode.string newUser.lastName)
                 , ("email", Encode.string newUser.email)
-                , ("password", Encode.string "test1234")
                 ] |> Http.jsonBody
     in
     Http.post
         { url = baseUrl ++ "/users"
         , body = body
-        , expect = Http.expectJson LoadSavedUser U.userDecoder
+        , expect = Http.expectJson LoadSavedUser userDetailDecoder
         }
 
-init : ( Model, Cmd Msg )
-init =
-    ( initialModel, Cmd.none )
+init : Navigation.Key -> ( Model, Cmd Msg )
+init navKey =
+    ( initialModel navKey, Cmd.none )
 
 type Msg
     = SaveUser
@@ -67,7 +74,7 @@ update msg model =
         SaveUser ->
             ( model, saveUser model.newUser )
         LoadSavedUser (Ok createdUser) ->
-            ( model, Cmd.none )
+            ( model, replaceUrl model.navKey (Routes.UpdateUser createdUser.id))
         LoadSavedUser (Err _) ->
             ( model, Cmd.none )
         UpdateField fieldName newValue ->

@@ -16,6 +16,7 @@ import WebSocket
 import Routes
 import Users as U
 import CreateUser as CU
+import UpdateUser as UU
 
 
 ---- MODEL ----
@@ -23,6 +24,7 @@ import CreateUser as CU
 type Page
     = Users U.Model
     | CreateUser CU.Model
+    | UpdateUser UU.Model
     | NotFound
 
 
@@ -54,10 +56,18 @@ setNewPage maybeRoute model =
 
         Just Routes.NewUser ->
             let
-                ( createUserModel, createUserCmd ) = CU.init
+                ( createUserModel, createUserCmd ) = CU.init model.navigationKey
             in
             ( { model | page = CreateUser createUserModel }
             , Cmd.map CreateUserMsg createUserCmd 
+            )
+
+        Just (Routes.UpdateUser userId) ->
+            let
+                ( updateUserModel, updateUserCmd ) = UU.init { userId = userId }
+            in
+            ( { model | page = UpdateUser updateUserModel }
+            , Cmd.map UpdateUserMsg updateUserCmd 
             )
 
         Nothing ->
@@ -71,6 +81,7 @@ type Msg
     | Visit UrlRequest
     | UsersMsg U.Msg
     | CreateUserMsg CU.Msg
+    | UpdateUserMsg UU.Msg
 
 processPageUpdate :
     (pageModel -> Page)
@@ -110,6 +121,14 @@ update msg model =
             , Cmd.map CreateUserMsg createUserCmd
             )
 
+        ( UpdateUserMsg updateUserMsg, UpdateUser updateUserModel ) ->
+            let
+                ( updatedUpdateUserModel, updateUserCmd ) = UU.update updateUserMsg updateUserModel
+            in
+            ( { model | page = UpdateUser updatedUpdateUserModel }
+            , Cmd.map UpdateUserMsg updateUserCmd
+            )
+
         ( Visit (Browser.Internal url), _ ) ->
             ( model, Navigation.pushUrl model.navigationKey (Url.toString url) )
         _ ->
@@ -137,6 +156,8 @@ view model =
                     U.view usersModel |> Html.map UsersMsg
                 CreateUser createUserModel ->
                     CU.view createUserModel |> Html.map CreateUserMsg
+                UpdateUser updateUserModel ->
+                    UU.view updateUserModel |> Html.map UpdateUserMsg
 
     in
     { title = "Admin"
