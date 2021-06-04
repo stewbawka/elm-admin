@@ -9,6 +9,10 @@ You can find the most recent version of this guide [here](https://github.com/hal
 
 `brew install sass/sass/sass`
 
+# Install elm-format
+
+`npm install -g elm-format`
+
 ## Table of Contents
 
 * [Sending feedback](#sending-feedback)

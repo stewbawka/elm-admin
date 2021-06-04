@@ -1,4 +1,4 @@
-module Routes exposing (Route(..), href, match, routeToUrl, replaceUrl)
+module Routes exposing (Route(..), href, match, replaceUrl, routeToUrl)
 
 import Browser.Navigation as Nav
 import Html
@@ -6,14 +6,17 @@ import Html.Attributes
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
 
+
 type Route
     = UsersList
     | NewUser
     | UpdateUser Int
 
+
 match : Url -> Maybe Route
 match url =
     Parser.parse routes url
+
 
 routeToUrl : Route -> String
 routeToUrl route =
@@ -25,7 +28,8 @@ routeToUrl route =
             "/users/new"
 
         UpdateUser userId ->
-            "/users/" ++ (String.fromInt userId)
+            "/users/" ++ String.fromInt userId
+
 
 href : Route -> Html.Attribute msg
 href route =
@@ -40,7 +44,7 @@ routes =
         , Parser.map UpdateUser (Parser.s "users" </> Parser.int)
         ]
 
+
 replaceUrl : Nav.Key -> Route -> Cmd msg
 replaceUrl key route =
     Nav.replaceUrl key (routeToUrl route)
-

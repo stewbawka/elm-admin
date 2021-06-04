@@ -2,24 +2,25 @@ module Main exposing (..)
 
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Navigation
-import Http
-import Time
-import Url exposing (Url)
-import Html exposing (Html, a, button, table, tbody, thead, text, td, th, tr, div, h1, img)
+import CreateUser as CU
+import DateFormat
+import Html exposing (Html, a, button, div, h1, img, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, href, src)
+import Http
+import Iso8601 exposing (decoder)
 import Json.Decode exposing (Decoder, andThen, at, bool, fail, int, list, string, succeed)
 import Json.Decode.Pipeline exposing (required)
-import Iso8601 exposing (decoder)
-import DateFormat
+import Routes
+import Time
+import UpdateUser as UU
+import Url exposing (Url)
+import Users as U
 import WebSocket
 
-import Routes
-import Users as U
-import CreateUser as CU
-import UpdateUser as UU
 
 
 ---- MODEL ----
+
 
 type Page
     = Users U.Model
@@ -33,45 +34,53 @@ type alias Model =
     , navigationKey : Navigation.Key
     }
 
+
 initialModel : Navigation.Key -> Model
 initialModel navigationKey =
     { page = NotFound
     , navigationKey = navigationKey
     }
 
+
 init : () -> Url -> Navigation.Key -> ( Model, Cmd Msg )
 init () url navigationKey =
     setNewPage (Routes.match url) (initialModel navigationKey)
+
 
 setNewPage : Maybe Routes.Route -> Model -> ( Model, Cmd Msg )
 setNewPage maybeRoute model =
     case maybeRoute of
         Just Routes.UsersList ->
             let
-                ( usersModel, usersCmd ) = U.init
+                ( usersModel, usersCmd ) =
+                    U.init
             in
             ( { model | page = Users usersModel }
-            , Cmd.map UsersMsg usersCmd 
+            , Cmd.map UsersMsg usersCmd
             )
 
         Just Routes.NewUser ->
             let
-                ( createUserModel, createUserCmd ) = CU.init model.navigationKey
+                ( createUserModel, createUserCmd ) =
+                    CU.init model.navigationKey
             in
             ( { model | page = CreateUser createUserModel }
-            , Cmd.map CreateUserMsg createUserCmd 
+            , Cmd.map CreateUserMsg createUserCmd
             )
 
         Just (Routes.UpdateUser userId) ->
             let
-                ( updateUserModel, updateUserCmd ) = UU.init { userId = userId }
+                ( updateUserModel, updateUserCmd ) =
+                    UU.init { userId = userId }
             in
             ( { model | page = UpdateUser updateUserModel }
-            , Cmd.map UpdateUserMsg updateUserCmd 
+            , Cmd.map UpdateUserMsg updateUserCmd
             )
 
         Nothing ->
             ( { model | page = NotFound }, Cmd.none )
+
+
 
 ---- UPDATE ----
 
@@ -82,6 +91,7 @@ type Msg
     | UsersMsg U.Msg
     | CreateUserMsg CU.Msg
     | UpdateUserMsg UU.Msg
+
 
 processPageUpdate :
     (pageModel -> Page)
@@ -106,16 +116,20 @@ update msg model =
             ( updatedModel
             , Cmd.batch [ cmd, WebSocket.close () ]
             )
+
         ( UsersMsg usersMsg, Users usersModel ) ->
             let
-                ( updatedUsersModel, usersCmd ) = U.update usersMsg usersModel
+                ( updatedUsersModel, usersCmd ) =
+                    U.update usersMsg usersModel
             in
             ( { model | page = Users updatedUsersModel }
             , Cmd.map UsersMsg usersCmd
             )
+
         ( CreateUserMsg createUserMsg, CreateUser createUserModel ) ->
             let
-                ( updatedCreateUserModel, createUserCmd ) = CU.update createUserMsg createUserModel
+                ( updatedCreateUserModel, createUserCmd ) =
+                    CU.update createUserMsg createUserModel
             in
             ( { model | page = CreateUser updatedCreateUserModel }
             , Cmd.map CreateUserMsg createUserCmd
@@ -123,7 +137,8 @@ update msg model =
 
         ( UpdateUserMsg updateUserMsg, UpdateUser updateUserModel ) ->
             let
-                ( updatedUpdateUserModel, updateUserCmd ) = UU.update updateUserMsg updateUserModel
+                ( updatedUpdateUserModel, updateUserCmd ) =
+                    UU.update updateUserMsg updateUserModel
             in
             ( { model | page = UpdateUser updatedUpdateUserModel }
             , Cmd.map UpdateUserMsg updateUserCmd
@@ -131,6 +146,7 @@ update msg model =
 
         ( Visit (Browser.Internal url), _ ) ->
             ( model, Navigation.pushUrl model.navigationKey (Url.toString url) )
+
         _ ->
             ( model, Cmd.none )
 
@@ -144,27 +160,31 @@ view model =
     let
         header =
             div [ class "nes-container is-centered is-rounded" ]
-                [ a [ class "nes-btn" 
+                [ a
+                    [ class "nes-btn"
                     , href (Routes.routeToUrl Routes.UsersList)
                     ]
                     [ text "Users" ]
                 ]
-            
-        content = 
+
+        content =
             case model.page of
                 NotFound ->
                     text "Not Found"
+
                 Users usersModel ->
                     U.view usersModel |> Html.map UsersMsg
+
                 CreateUser createUserModel ->
                     CU.view createUserModel |> Html.map CreateUserMsg
+
                 UpdateUser updateUserModel ->
                     UU.view updateUserModel |> Html.map UpdateUserMsg
-
     in
     { title = "Admin"
     , body = [ header, content ]
     }
+
 
 
 ---- PROGRAM ----
